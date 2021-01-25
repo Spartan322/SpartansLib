@@ -1,8 +1,8 @@
 ﻿using System;
 namespace SpartansLib.Internal
 {
-	public static class MemberUtility
-	{
+    public static class MemberUtility
+    {
 
-	}
+    }
 }

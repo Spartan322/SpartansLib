@@ -5,9 +5,9 @@ using SpartansLib;
 
 namespace SpartansLib.Attributes
 {
-	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class ParentNodeAttribute : SpartansLibAttribute
-	{
+    {
         public Type ParentType;
         public bool Required;
         public int CheckingRange;
@@ -21,7 +21,7 @@ namespace SpartansLib.Attributes
             ExplicitType = explicitType;
         }
 
-		private static Type GetMemberType(MemberInfo info)
+        private static Type GetMemberType(MemberInfo info)
         {
             switch (info)
             {
@@ -33,7 +33,7 @@ namespace SpartansLib.Attributes
             return null;
         }
 
-		public override void OnReady<T>(T node, MemberInfo info)
+        public override void OnReady<T>(T node, MemberInfo info)
         {
             Node checkingNode = node;
             for(var i = 0; i < CheckingRange; i++)

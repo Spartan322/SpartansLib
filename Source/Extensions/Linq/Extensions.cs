@@ -56,10 +56,10 @@ namespace SpartansLib.Extensions.Linq
 
 
         public static ChildT SelectFirstOrCreate<ParentT, ChildT>(
-    	    this IEnumerable enumerable,
-			ParentT parent,
-			Func<ParentT, ChildT> create
-		)
+            this IEnumerable enumerable,
+            ParentT parent,
+            Func<ParentT, ChildT> create
+        )
         {
             foreach (var enumer in enumerable)
                 if (enumer is ChildT select) return select;

@@ -11,7 +11,7 @@ using ConnectFlags = Godot.Object.ConnectFlags;
 
 namespace SpartansLib.Attributes
 {
-	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class NodeAttribute : SpartansLibAttribute
     {
         public string Path;

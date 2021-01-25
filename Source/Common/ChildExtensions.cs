@@ -10,10 +10,10 @@ namespace SpartansLib.Common
     {
         public static ChildT GetChildOrCreate<ParentT, ChildT>(
             this ParentT parent,
-			NodePath path,
-			Func<ParentT, ChildT> func
-		)
-			where ParentT : Node
+            NodePath path,
+            Func<ParentT, ChildT> func
+        )
+            where ParentT : Node
             where ChildT : Node
         {
             if (path == null)
@@ -28,7 +28,7 @@ namespace SpartansLib.Common
         }
 
         public static ChildT GetChildOrDefault<ParentT, ChildT>(this ParentT parent, NodePath path = null)
-			where ParentT : Node
+            where ParentT : Node
             where ChildT : Node
             => parent.GetChildOrCreate<ParentT, ChildT>(path, _ => default);
 
@@ -60,17 +60,17 @@ namespace SpartansLib.Common
             return child;
         }
 
-		public static ChildT AddChildAndSkip<ChildT>(
-			this ChildT node,
-			Node child,
-			bool legibleUniqueName = false
-		) where ChildT : Node
-		{
-			node.AddChild(child, legibleUniqueName);
-			return node;
-		}
+        public static ChildT AddChildAndSkip<ChildT>(
+            this ChildT node,
+            Node child,
+            bool legibleUniqueName = false
+        ) where ChildT : Node
+        {
+            node.AddChild(child, legibleUniqueName);
+            return node;
+        }
 
-		public static ParentT MoveChildEx<ParentT>(this ParentT parent, Node child, int pos)
+        public static ParentT MoveChildEx<ParentT>(this ParentT parent, Node child, int pos)
             where ParentT : Node
         {
             if (pos < 0)
