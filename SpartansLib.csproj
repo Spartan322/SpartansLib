@@ -8,7 +8,7 @@
     <RootNamespace>SpartansLib</RootNamespace>
     <AssemblyName>SpartansLib</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <BaseDirectory>Source</BaseDirectory>
+    <BaseDirectory>src</BaseDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -19,8 +19,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <IntermediateOutputPath>Source\obj\Debug</IntermediateOutputPath>
-    <LangVersion>7.3</LangVersion>
+    <IntermediateOutputPath>src\obj\Debug</IntermediateOutputPath>
+    <LangVersion>Latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
@@ -29,7 +29,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <IntermediateOutputPath>Source\obj\Release</IntermediateOutputPath>
+    <IntermediateOutputPath>src\obj\Release</IntermediateOutputPath>
     <LangVersion>Latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -61,56 +61,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Source\Attributes\ConnectAttribute.cs" />
-    <Compile Include="Source\Attributes\NodeAttribute.cs" />
-    <Compile Include="Source\Attributes\ParentNodeAttribute.cs" />
-    <Compile Include="Source\DragType.cs" />
-    <Compile Include="Source\Extensions\ButtonExtensions.cs" />
-    <Compile Include="Source\Extensions\ColorExtensions.cs" />
-    <Compile Include="Source\Extensions\EnumerableExtensions.cs" />
-    <Compile Include="Source\Extensions\FloatExtensions.cs" />
-    <Compile Include="Source\Extensions\GodotExtensions.cs" />
-    <Compile Include="Source\Extensions\Linq\Extensions.cs" />
-    <Compile Include="Source\Extensions\PackedSceneExtensions.cs" />
-    <Compile Include="Source\Extensions\PhysicsDirectSpaceStateExtensions.cs" />
-    <Compile Include="Source\Extensions\Rect2Extensions.cs" />
-    <Compile Include="Source\Extensions\ReflectionExtensions.cs" />
-    <Compile Include="Source\Extensions\StringBuilderExtensions.cs" />
-    <Compile Include="Source\Extensions\StringExtensions.cs" />
-    <Compile Include="Source\Extensions\VectorExtensions.cs" />
-    <Compile Include="Source\Logger.cs" />
-    <Compile Include="Source\NodeRegistry.cs" />
-    <Compile Include="Source\Signal.cs" />
-    <Compile Include="Source\SL.cs" />
-    <Compile Include="Source\Structure\Angle.cs" />
-    <Compile Include="Source\Structure\ColorExt.cs" />
-    <Compile Include="Source\Structure\ListWrapper.cs" />
-    <Compile Include="Source\Structure\Offset.cs" />
-    <Compile Include="Source\Structure\Pair.cs" />
-    <Compile Include="Source\Utility.cs" />
-    <Compile Include="Source\XML\ElementInfo.cs" />
-    <Compile Include="Source\XML\EventExecutor.cs" />
-    <Compile Include="Source\XML\EventReader.cs" />
-    <Compile Include="Source\XML\ReadOnlyXmlReader.cs" />
-    <Compile Include="Source\Attributes\GlobalAttribute.cs" />
-    <Compile Include="Source\Attributes\SpartansLibAttribute.cs" />
-    <Compile Include="Source\Properties\AssemblyInfo.cs" />
-    <Compile Include="Source\Common\AncestorExtensions.cs" />
-    <Compile Include="Source\Common\ChildExtensions.cs" />
-    <Compile Include="Source\Common\Extensions.cs" />
-    <Compile Include="Source\Common\LoggerExtensions.cs" />
-    <Compile Include="Source\Common\TreeExtensions.cs" />
-    <Compile Include="Source\Common\NodePathExtensions.cs" />
-    <Compile Include="Source\Internal\MemberUtility.cs" />
-    <Compile Include="Source\Internal\VariableMemberInfo.cs" />
-    <Compile Include="Source\Attributes\SingletonAttribute.cs" />
-    <Compile Include="Source\Attributes\ServiceAttribute.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Source\" />
-    <Folder Include="Source\Common\" />
-    <Folder Include="Source\Extensions\NodeEx\" />
-    <Folder Include="Source\Internal\" />
+    <Compile Include="src\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

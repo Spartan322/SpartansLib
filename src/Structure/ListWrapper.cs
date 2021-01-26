@@ -98,7 +98,7 @@ namespace SpartansLib.Structure
         public IEnumerator<T> GetEnumerator() => list.GetEnumerator();
 
         public int IndexOf(T item) => list.IndexOf(item);
-        public void Insert(int index, T item) 
+        public void Insert(int index, T item)
         {
             list.Insert(index, item);
             TryUpdate();

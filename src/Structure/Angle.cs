@@ -3,7 +3,7 @@ using Godot;
 
 namespace SpartansLib.Structure
 {
-    public struct Angle : 
+    public struct Angle :
         IEquatable<Angle>,
         IEquatable<float>,
         IComparable,

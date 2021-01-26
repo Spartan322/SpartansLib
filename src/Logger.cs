@@ -11,7 +11,7 @@ namespace SpartansLib
         [Flags]
         public enum LogLevel
         {
-            VERBOSE =   0b1, 
+            VERBOSE =   0b1,
             DEBUG =     0b10,
             INFO =      0b100,
             WARN =      0b1000,
@@ -186,7 +186,7 @@ namespace SpartansLib
             [CallerMemberName] string memberName = "",
             [CallerFilePath] string sourceFilePath = "",
             [CallerLineNumber] int sourceLineNumber = 0
-        ) 
+        )
             => LogPrefixed(LogLevel.VERBOSE,
                 FormatPrefix(memberName, sourceFilePath, sourceLineNumber),
                 arg0,

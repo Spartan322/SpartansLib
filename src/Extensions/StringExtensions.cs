@@ -27,7 +27,7 @@ namespace SpartansLib.Extensions
             return newStr.ToString();
         }
 
-        public static string SpaceCapitals(this string input) 
+        public static string SpaceCapitals(this string input)
             => input.SpaceCapitals((c, i) => true);
 
         private static Exception CreateArgParseFail(string val, string parseToName, string valVarName)
@@ -75,7 +75,7 @@ namespace SpartansLib.Extensions
             if (split.Length != 3)
                 return false;
             if (float.TryParse(split[0], out var x) && float.TryParse(split[1], out var y) && float.TryParse(split[2], out var z))
-            { 
+            {
                 result = new Vector3(x, y, z);
                 return true;
             }
