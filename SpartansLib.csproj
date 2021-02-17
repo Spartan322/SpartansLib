@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <!--<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>-->
     <ProjectGuid>{B48DE8B7-A807-4716-87B0-6C971A598777}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>SpartansLib</RootNamespace>
@@ -19,7 +19,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <IntermediateOutputPath>src\obj\Debug</IntermediateOutputPath>
+    <IntermediateOutputPath>obj\Debug</IntermediateOutputPath>
     <LangVersion>Latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -29,7 +29,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <IntermediateOutputPath>src\obj\Release</IntermediateOutputPath>
+    <IntermediateOutputPath>obj\Release</IntermediateOutputPath>
     <LangVersion>Latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -65,6 +65,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="SpartansLibTask\SpartansLibTask.csproj">
+      <Project>{e53e5806-61e0-4229-b4ca-e3003a617282}</Project>
+      <Name>SpartansLibTask</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

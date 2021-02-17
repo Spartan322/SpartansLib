@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
@@ -37,11 +38,14 @@ namespace SpartansLib.Injection
         // private MethodReference _exportAttrCtorDef;
         // private MethodReference _godotPushErrorMethodDef;
 
+        private string _configuration;
+
         public GodotInjector(
             string targetDllPath,
             string spartansLibDllPath,
             string godotMainAssemblyDir,
             string godotLinkedAssembliesDir,
+            string configuration,
             bool debugCheckEnabled
         )
         {
@@ -50,6 +54,7 @@ namespace SpartansLib.Injection
             _godotMainAssemblyDir = godotMainAssemblyDir;
             _godotLinkedAssembliesDir = godotLinkedAssembliesDir;
             // _debugChecksEnabled = debugCheckEnabled;
+            _configuration = configuration;
         }
 
         private void ReadTargetAssembly()
@@ -61,7 +66,7 @@ namespace SpartansLib.Injection
             var readerParameters = new ReaderParameters
             {
                 AssemblyResolver = assemblyResolver,
-                ReadSymbols = true,
+                ReadSymbols = !_configuration.Contains("Release"),
                 ReadWrite = true
             };
 
@@ -722,7 +727,7 @@ namespace SpartansLib.Injection
 
             var writerParameters = new WriterParameters
             {
-                WriteSymbols = true
+                WriteSymbols = !_configuration.Contains("Release")
             };
 
             _targetModule.Write(writerParameters);

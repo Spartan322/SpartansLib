@@ -41,6 +41,7 @@ namespace SpartansLib.Injection
                 spartansLibDllPath,
                 godotMainAssemblyDir,
                 godotLinkedAssembliesDir,
+                Configuration,
                 debugChecksEnabled))
             {
                 Log.LogMessage(MessageImportance.Low,"Beginning Injection");
