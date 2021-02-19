@@ -62,67 +62,77 @@ namespace SpartansLib
         private static string FormatPrefix(string memName, string path, int lineNum)
             => $"{Path.GetFileName(Path.GetDirectoryName(path)) + Path.DirectorySeparatorChar + Path.GetFileName(path)}#{lineNum}";
 
-#if GODOT
         public static void PushWarning(params object[] input)
-            => Godot.GD.PushWarning(string.Format(input[0].ToString(), input.Skip(1).ToArray()));
+        {
+#if GODOT
+            Godot.GD.PushWarning(string.Format(input[0].ToString(), input.Skip(1).ToArray()));
+#else
+            Console.Error.Write(string.Format(input[0].ToString(), input.Skip(1).ToArray()));
+#endif
+        }
 
         public static void PushError(params object[] input)
-            => Godot.GD.PushError(string.Format(input[0].ToString(), input.Skip(1).ToArray()));
+        {
+#if GODOT
+            Godot.GD.PushError(string.Format(input[0].ToString(), input.Skip(1).ToArray()));
+#else
+            Console.Error.Write(string.Format(input[0].ToString(), input.Skip(1).ToArray()));
 #endif
+        }
         /// <summary>
         /// Logs the specified level and input.
         /// </summary>
         /// <param name="level">Log Level to log for.</param>
         /// <param name="input">Any stringable inputs. (if larger then one, must be in standard C# String.Format format)</param>
         public static void Log(LogLevel level,
-            object arg0 = null,
-            object arg1 = null,
-            object arg2 = null,
-            object arg3 = null,
-            object arg4 = null,
-            object arg5 = null,
-            object arg6 = null,
-            object arg7 = null,
-            object arg8 = null,
-            object arg9 = null,
-            object arg10 = null,
-            object arg11 = null,
-            object arg12 = null,
-            object arg13 = null,
-            object arg14 = null,
-            object arg15 = null,
-            object arg16 = null,
-            object arg17 = null,
-            object arg18 = null,
-            object arg19 = null,
-            object arg20 = null,
-            [CallerMemberName] string memberName = "",
-            [CallerFilePath] string sourceFilePath = "",
-            [CallerLineNumber] int sourceLineNumber = 0
-        )
-            => LogPrefixed(level,
-                FormatPrefix(memberName, sourceFilePath, sourceLineNumber),
-                arg0,
-                arg1,
-                arg2,
-                arg3,
-                arg4,
-                arg5,
-                arg6,
-                arg7,
-                arg8,
-                arg9,
-                arg10,
-                arg11,
-                arg12,
-                arg13,
-                arg14,
-                arg15,
-                arg16,
-                arg17,
-                arg18,
-                arg19,
-                arg20);
+                object arg0 = null,
+                object arg1 = null,
+                object arg2 = null,
+                object arg3 = null,
+                object arg4 = null,
+                object arg5 = null,
+                object arg6 = null,
+                object arg7 = null,
+                object arg8 = null,
+                object arg9 = null,
+                object arg10 = null,
+                object arg11 = null,
+                object arg12 = null,
+                object arg13 = null,
+                object arg14 = null,
+                object arg15 = null,
+                object arg16 = null,
+                object arg17 = null,
+                object arg18 = null,
+                object arg19 = null,
+                object arg20 = null,
+                [CallerMemberName] string memberName = "",
+                [CallerFilePath] string sourceFilePath = "",
+                [CallerLineNumber] int sourceLineNumber = 0
+            )
+                => LogPrefixed(level,
+                    FormatPrefix(memberName, sourceFilePath, sourceLineNumber),
+                    arg0,
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    arg7,
+                    arg8,
+                    arg9,
+                    arg10,
+                    arg11,
+                    arg12,
+                    arg13,
+                    arg14,
+                    arg15,
+                    arg16,
+                    arg17,
+                    arg18,
+                    arg19,
+                    arg20);
 
 
         public static void LogPrefixed(LogLevel level, string prefix = "", params object[] input)
@@ -131,7 +141,8 @@ namespace SpartansLib
             input = input.Where(i => i != null).ToArray();
             Tuple<LogLevel, string> t;
             string time = "", fullPrefix = "";
-            if (input.Length > 0) {
+            if (input.Length > 0)
+            {
                 var tdic = Godot.OS.GetDatetime(true);
                 //time = $"{tdic["month"]}/{tdic["day"]}/{tdic["year"]}|{tdic["hour"]}:{tdic["minute"]}:{tdic["second"]}";
                 fullPrefix = $"{tdic["month"]}/{tdic["day"]}/{tdic["year"]}:{tdic["hour"]}:{tdic["minute"]}:{tdic["second"]} [{level}] {prefix}: ";
@@ -153,7 +164,8 @@ namespace SpartansLib
             if (IsError(level)) Godot.GD.PrintErr(t.Item2);
             else Godot.GD.Print(t.Item2);
 #else
-            Console.WriteLine(t.Item2);
+            if (IsError(level)) Console.Error.Write(t.Item2);
+            else Console.WriteLine(t.Item2);
 #endif
         }
 
