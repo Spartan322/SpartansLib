@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Build.Utilities;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
@@ -77,7 +78,7 @@ namespace SpartansLib.Injection
 
             _godotNodeTypeDef = _targetModule.ImportReference(godotSharpModule.GetType("Godot.Node")).Resolve();
             // _nodeGetNodeMethodDef = _targetModule.ImportReference(
-                // FindMethodByFullName(_godotNodeTypeDef, "Godot.Node Godot.Node::GetNodeOrNull(Godot.NodePath)"));
+            // FindMethodByFullName(_godotNodeTypeDef, "Godot.Node Godot.Node::GetNodeOrNull(Godot.NodePath)"));
 
             // _godotNodePathTypeDef = _nodeGetNodeMethodDef.Parameters[0].ParameterType.Resolve();
 
@@ -242,7 +243,7 @@ namespace SpartansLib.Injection
                 name,
                 BindingFlags.Public | BindingFlags.Static,
                 null,
-                new[] {argType},
+                new[] { argType },
                 null));
 
 
@@ -251,7 +252,7 @@ namespace SpartansLib.Injection
                 name,
                 BindingFlags.Public | BindingFlags.Instance,
                 null,
-                new[] {argType},
+                new[] { argType },
                 null));
 
         private IEnumerable<Instruction> ComposeForCustomAttribute(CustomAttribute attribute, ILHelper ilh)
@@ -317,7 +318,7 @@ namespace SpartansLib.Injection
             );
         }
 
-        private void ProcessAttributes(TypeDefinition nodeClass)
+        private void ProcessAttributes(TypeDefinition nodeClass, TaskLoggingHelper log)
         {
             Console.WriteLine($"Processing Injection Attributes for '{nodeClass.FullName}'");
 
@@ -326,7 +327,14 @@ namespace SpartansLib.Injection
             members.AddRange(nodeClass.Methods);
             members.AddRange(nodeClass.NestedTypes);
 
-            var ctorMethod = nodeClass.Methods.First(m => m.IsConstructor && !m.IsStatic && m.Parameters.Count == 0);
+            var ctorMethod = nodeClass.Methods.FirstOrDefault(m => m.IsConstructor && !m.IsStatic && m.Parameters.Count == 0);
+            if (ctorMethod == null)
+            {
+                var msg = $"{nameof(SpartansLib)}.{nameof(Injection)} does not support injecting objects that lack a default constructor. '{nodeClass.FullName}' found lacking a default constructor.";
+                if (log == null) throw new InvalidOperationException(msg);
+                log.LogWarning(msg);
+                return;
+            }
             var cilh = new ILHelper(ctorMethod.Body.GetILProcessor());
             MethodDefinition readyMethod = null;
             ILHelper rilh = null;
@@ -706,7 +714,7 @@ namespace SpartansLib.Injection
                 il.Append(instruction);
         }
 
-        public void Inject()
+        public void Inject(TaskLoggingHelper log)
         {
             ReadTargetAssembly();
 
@@ -722,7 +730,7 @@ namespace SpartansLib.Injection
                 //     ProcessEditorLinks(nodeClass);
                 // if (canProcessAutoloadLinks)
                 //     ProcessAutoloadLinks(nodeClass);
-                ProcessAttributes(nodeClass);
+                ProcessAttributes(nodeClass, log);
             }
 
             var writerParameters = new WriterParameters

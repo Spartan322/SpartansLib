@@ -44,9 +44,9 @@ namespace SpartansLib.Injection
                 Configuration,
                 debugChecksEnabled))
             {
-                Log.LogMessage(MessageImportance.Low,"Beginning Injection");
-                godotInjector.Inject();
-                Log.LogMessage(MessageImportance.Low,"Injection Complete");
+                Log.LogMessage(MessageImportance.Low, "Beginning Injection");
+                godotInjector.Inject(Log);
+                Log.LogMessage(MessageImportance.Low, "Injection Complete");
             }
 
             Log.LogMessage(MessageImportance.High, "Injector Terminated");
