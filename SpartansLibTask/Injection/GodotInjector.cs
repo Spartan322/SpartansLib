@@ -268,13 +268,12 @@ namespace SpartansLib.Injection
                 new[] { argType },
                 null));
 
-
-        private MethodReference ImportMethodFor(Type type, string name, Type argType)
+        private MethodReference ImportMethodFor(Type type, string name, params Type[] argTypes)
             => _targetModule.ImportReference(type.GetMethod(
                 name,
                 BindingFlags.Public | BindingFlags.Instance,
                 null,
-                new[] { argType },
+                argTypes,
                 null));
 
         private IEnumerable<Instruction> ComposeForCustomAttribute(CustomAttribute attribute, ILHelper ilh)
@@ -320,7 +319,7 @@ namespace SpartansLib.Injection
                 _getPropertyMethod = ImportMethodFor(
                     typeof(Type),
                     nameof(Type.GetProperty),
-                    typeof(string));
+                    typeof(string), typeof(BindingFlags));
             }
 
             return ILHelper.Compose(
@@ -335,6 +334,7 @@ namespace SpartansLib.Injection
                         ilh.LoadType(typeRef),
                         ilh.CallMethod(_typeRuntimeHandle),
                         ilh.PushString(memberDef.Name),
+                        new[] {ilh.IL.Create(OpCodes.Ldc_I4, 52)},
                         ilh.CallMethod(_getPropertyMethod)
                     }
             );
