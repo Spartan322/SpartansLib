@@ -177,12 +177,34 @@ namespace SpartansLib.Injection
                 | MethodAttributes.HideBySig
                 | MethodAttributes.Virtual, _targetModule.TypeSystem.Void);
 
+            var baseReady = GetBaseMethod(methodDef, nodeClass.BaseType.Resolve());
+
             var il = methodDef.Body.GetILProcessor();
+            if (baseReady != null)
+            {
+                il.Emit(OpCodes.Nop);
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Call, _targetModule.ImportReference(baseReady));
+            }
             il.Emit(OpCodes.Ret);
 
             nodeClass.Methods.Add(methodDef);
 
             return methodDef;
+        }
+
+        private MethodDefinition GetBaseMethod(MethodDefinition method, TypeDefinition baseType = null)
+        {
+            if (baseType == null)
+                baseType = method.DeclaringType.BaseType.Resolve();
+            MethodDefinition result = null;
+            while (baseType.FullName != "System.Object")
+            {
+                result = baseType.Methods.FirstOrDefault(m => m.Name == method.Name && m.Parameters.SequenceEqual(method.Parameters));
+                if (result != null) break;
+                baseType = baseType.BaseType.Resolve();
+            }
+            return result;
         }
 
         // private void ProcessAutoloadLinks(TypeDefinition nodeClass)
@@ -366,7 +388,7 @@ namespace SpartansLib.Injection
                         ComposeMemberReferenceInstruction(nodeClass, nodeClass, rilh),
                         rilh.CallMethodVirtual(onReadyMethodImp),
                         rilh.Nop()
-                    ));
+                    ), true);
                 }
             }
 
@@ -427,7 +449,7 @@ namespace SpartansLib.Injection
                             rilh.PushThis(),
                             ComposeMemberReferenceInstruction(nodeClass, memberDef, rilh),
                             rilh.CallMethodVirtual(onReadyMethodImp),
-                            rilh.Nop()));
+                            rilh.Nop()), true);
                 }
             }
         }
@@ -699,16 +721,23 @@ namespace SpartansLib.Injection
         //     return exportedField;
         // }
 
-        private static void InsertInstructionsIntoExistingMethod(ILProcessor il, IEnumerable<Instruction> instructions)
+        private void InsertInstructionsIntoExistingMethod(ILProcessor il, IEnumerable<Instruction> instructions, bool checkForBaseCall = false)
         {
+            // In the general case if checkForBaseCall is true, if the first instructions are a base call, it will inject after the base call instead
+            var offset = checkForBaseCall
+                    && il.Body.Instructions[1].OpCode == OpCodes.Ldarg_0
+                    && il.Body.Instructions[2].OpCode == OpCodes.Call
+                    && il.Body.Instructions[2].Operand.ToString() == GetBaseMethod(il.Body.Method).ToString() ? 3 : 0;
+            while (il.Body.Instructions.Count < 3)
+                il.Emit(OpCodes.Nop);
             foreach (var instruction in instructions.Reverse())
             {
-                var first = il.Body.Instructions[0];
+                var first = il.Body.Instructions[offset];
                 il.InsertBefore(first, instruction);
             }
         }
 
-        private static void InsertInstructionsIntoNewMethod(ILProcessor il, IEnumerable<Instruction> instructions)
+        private void InsertInstructionsIntoNewMethod(ILProcessor il, IEnumerable<Instruction> instructions)
         {
             foreach (var instruction in instructions)
                 il.Append(instruction);
