@@ -1,11 +1,13 @@
 using System;
 using System.Reflection;
 using Godot;
+using GArray = Godot.Collections.Array;
 using ConnectFlags = Godot.Object.ConnectFlags;
+using System.Linq;
 
 namespace SpartansLib.Attributes
 {
-    [AttributeUsage(AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class ConnectAttribute : SpartansLibAttribute
     {
         public string NodePath;
@@ -28,7 +30,11 @@ namespace SpartansLib.Attributes
                 GD.PushError($"'{connectNode.GetPath()}' does not have a signal '{SignalName}'");
                 return;
             }
-            connectNode.Connect(SignalName, node, memberInfo.Name, null, (uint)Flags);
+            GArray binds = null;
+            var lastParam = ((MethodInfo)memberInfo).GetParameters().LastOrDefault();
+            if (lastParam?.ParameterType == typeof(ulong) && lastParam.Name == "_triggerId")
+                binds = new GArray { connectNode.GetInstanceId() };
+            connectNode.Connect(SignalName, node, memberInfo.Name, binds, (uint)Flags);
         }
     }
 }
