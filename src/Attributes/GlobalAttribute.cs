@@ -29,29 +29,23 @@ namespace SpartansLib.Attributes
             switch (Singular)
             {
                 case false:
-                {
                     while (NodeRegistry.IsRegistered(currentName))
                         currentName = string.Format(Name, counter++);
                     break;
-                }
                 case true:
-                {
                     if (NodeRegistry.IsRegistered(Name))
                     {
                         GD.PushError($"{Name} already register in {nameof(NodeRegistry)}");
                         return;
                     }
                     break;
-                }
                 default:
-                {
                     if (NodeRegistry.IsRegistered(Name))
                     {
                         node.RegisterOrReplace(Name);
                         return;
                     }
                     break;
-                }
             }
             node.Register(currentName);
         }

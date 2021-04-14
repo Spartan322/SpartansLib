@@ -1,54 +1,33 @@
 using System;
-using System.Collections;
-using System.Reflection;
-using System.Text;
-using Godot;
-using SpartansLib.Internal;
-using SpartansLib.Common;
 using System.Linq;
 using System.Collections.Generic;
-using ConnectFlags = Godot.Object.ConnectFlags;
+using SpartansLib.Internal;
+using SpartansLib.Common;
+using Godot;
 
 namespace SpartansLib.Attributes
 {
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
-    public class NodeAttribute : SpartansLibAttribute
+    public class RetrieveNodeAttribute : SpartansLibAttribute
     {
-        public string Path;
+        public string Name;
         public bool Required;
-        public string PathName;
 
-        public NodeAttribute(string path = null, bool required = true)
+        public RetrieveNodeAttribute(string name = null, bool required = true)
         {
-            Path = path;
+            Name = name;
             Required = required;
         }
 
-        public override void OnReady<T>(T node, MemberInfo memberInfo)
+        public override void OnReady<T>(T node, System.Reflection.MemberInfo memberInfo)
         {
-            var pathNameMemberName = $"{memberInfo.Name}Path";
-            var tType = node.GetType();
-            if (PathName == null && tType.GetMember(pathNameMemberName).Length > 0)
-                PathName = pathNameMemberName;
-            if (PathName != null)
-            {
-                var members = tType.GetMember(PathName);
-                if (members.Length != 0)
-                {
-                    string path = null;
-                    path = new VariableMemberInfo(members[0]).GetValue(node)?.ToString();
-                    if (path != null)
-                        Path = path;
-                }
-            }
-            if (Path == null)
-                Path = FilterName(memberInfo.Name);
-
-            var val = node.GetNode(Path);
+            if (Name == null)
+                Name = FilterName(memberInfo.Name);
+            var val = NodeRegistry.GetOrNull(Name);
             if (val == null)
             {
                 if (!Required) return;
-                var err = $"Node '{Path}' is required but could not be found.";
+                var err = $"Node '{Name}' must be registered but could not be found.";
                 if (!Engine.EditorHint) throw new NullReferenceException(err);
                 Logger.PushError(err);
                 return;

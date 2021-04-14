@@ -47,8 +47,8 @@ namespace SpartansLib
             return null;
         }
 
-        public static T GetOrNull<T>(string name)
+        public static T GetOrNull<T>(string name = null)
             where T : Node
-            => GetOrNull(name) as T;
+            => GetOrNull(name ?? typeof(T).Name) as T;
     }
 }
