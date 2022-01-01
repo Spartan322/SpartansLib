@@ -55,23 +55,23 @@ namespace SpartansLib.Extensions
             return true;
         }
 
-        public static bool Any(this IEnumerable source)
-        {
-            ErrCheck.Null(source, nameof(source));
-            var enumerator = source.GetEnumerator();
-            if (enumerator is IDisposable disposable)
-                using (disposable) return enumerator.MoveNext();
-            return enumerator.MoveNext();
-        }
+        // public static bool Any(this IEnumerable source)
+        // {
+        //     ErrCheck.Null(source, nameof(source));
+        //     var enumerator = source.GetEnumerator();
+        //     if (enumerator is IDisposable disposable)
+        //         using (disposable) return enumerator.MoveNext();
+        //     return enumerator.MoveNext();
+        // }
 
-        public static bool Any(this IEnumerable source, Predicate<object> predicate)
-        {
-            ErrCheck.Null(source, nameof(source));
-            ErrCheck.Null(predicate, nameof(predicate));
-            foreach (var i in source)
-                if (predicate(i)) return true;
-            return false;
-        }
+        // public static bool Any(this IEnumerable source, Predicate<object> predicate)
+        // {
+        //     ErrCheck.Null(source, nameof(source));
+        //     ErrCheck.Null(predicate, nameof(predicate));
+        //     foreach (var i in source)
+        //         if (predicate(i)) return true;
+        //     return false;
+        // }
 
         public static IReadOnlyList<T> AsReadOnly<T>(this IList<T> source)
             => new ReadOnlyCollection<T>(source);

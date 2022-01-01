@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Reflection;
 
 namespace SpartansLib.Attributes
 {
+    [Obsolete("Not Implemented")]
     public class SingletonAttribute : SpartansLibAttribute
     {
         public Type[] Types { get; }

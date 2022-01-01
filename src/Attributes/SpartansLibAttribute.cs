@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
-using System.Reflection;
-using Godot;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace SpartansLib.Attributes
 {
@@ -15,15 +15,11 @@ namespace SpartansLib.Attributes
             return builder.ToString();
         }
 
-        // ReSharper disable once UnusedMember.Global
-        public virtual void OnConstructor<T>(T node, MemberInfo memberInfo)
-            where T : Node
+        public virtual void OnConstructor(ILProcessor il, MemberReference reference)
         {
         }
 
-        // ReSharper disable once UnusedMember.Global
-        public virtual void OnReady<T>(T node, MemberInfo memberInfo)
-            where T : Node
+        public virtual void OnReady(ILProcessor il, MemberReference reference)
         {
         }
     }

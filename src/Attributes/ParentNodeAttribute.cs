@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Reflection;
-using Godot;
-using SpartansLib;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace SpartansLib.Attributes
 {
+    [Obsolete("Not yet supported for Godot")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class ParentNodeAttribute : SpartansLibAttribute
     {
@@ -33,35 +34,35 @@ namespace SpartansLib.Attributes
             return null;
         }
 
-        public override void OnReady<T>(T node, MemberInfo info)
+        public override void OnReady(ILProcessor il, MemberReference reference)
         {
-            Node checkingNode = node;
-            for(var i = 0; i < CheckingRange; i++)
-            {
-                checkingNode = checkingNode.GetParent();
-                if (ParentType == null && (GetMemberType(info)?.IsAssignableFrom(checkingNode.GetType()) ?? false)
-                    || ExplicitType && checkingNode.GetType() == ParentType
-                    || !ExplicitType && ParentType.IsInstanceOfType(checkingNode))
-                    break;
-                if (i == CheckingRange - 1) checkingNode = null;
-            }
-            if (checkingNode == null)
-            {
-                if (!Required) return;
-                var err = $"Parental Node of type '{ParentType.FullName}' for '{node.GetPath()}' could not be found.";
-                if (!Engine.EditorHint) throw new NullReferenceException(err);
-                Logger.PushError(err);
-                return;
-            }
-            switch (info)
-            {
-                case PropertyInfo propInfo when propInfo.CanWrite && propInfo.PropertyType.IsInstanceOfType(checkingNode):
-                    propInfo.SetValue(node, checkingNode);
-                    break;
-                case FieldInfo fieldInfo when fieldInfo.FieldType.IsInstanceOfType(checkingNode):
-                    fieldInfo.SetValue(node, checkingNode);
-                    break;
-            }
+            // Node checkingNode = node;
+            // for(var i = 0; i < CheckingRange; i++)
+            // {
+            //     checkingNode = checkingNode.GetParent();
+            //     if (ParentType == null && (GetMemberType(info)?.IsAssignableFrom(checkingNode.GetType()) ?? false)
+            //         || ExplicitType && checkingNode.GetType() == ParentType
+            //         || !ExplicitType && ParentType.IsInstanceOfType(checkingNode))
+            //         break;
+            //     if (i == CheckingRange - 1) checkingNode = null;
+            // }
+            // if (checkingNode == null)
+            // {
+            //     if (!Required) return;
+            //     var err = $"Parental Node of type '{ParentType.FullName}' for '{node.GetPath()}' could not be found.";
+            //     if (!Engine.EditorHint) throw new NullReferenceException(err);
+            //     Logger.PushError(err);
+            //     return;
+            // }
+            // switch (info)
+            // {
+            //     case PropertyInfo propInfo when propInfo.CanWrite && propInfo.PropertyType.IsInstanceOfType(checkingNode):
+            //         propInfo.SetValue(node, checkingNode);
+            //         break;
+            //     case FieldInfo fieldInfo when fieldInfo.FieldType.IsInstanceOfType(checkingNode):
+            //         fieldInfo.SetValue(node, checkingNode);
+            //         break;
+            // }
         }
     }
 }

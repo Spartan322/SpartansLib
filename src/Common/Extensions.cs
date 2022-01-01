@@ -27,15 +27,13 @@ namespace SpartansLib.Common
                 throw new ArgumentNullException(nameof(path));
 
             var result = parent.GetNode<ChildT>(path);
-            if (result == null)
-            {
-                result = func(parent);
-                var parentPath = path.GetParentName();
-                var node = parent.GetNodeOrNull(parentPath);
-                if (node == null)
-                    throw new InvalidOperationException($"Node '{parentPath}' not found.");
-                node.AddChild(result);
-            }
+            if (result != null) return result;
+            result = func(parent);
+            var parentPath = path.GetParentName();
+            var node = parent.GetNodeOrNull(parentPath);
+            if (node == null)
+                throw new InvalidOperationException($"Node '{parentPath}' not found.");
+            node.AddChild(result);
             return result;
         }
 
@@ -43,5 +41,13 @@ namespace SpartansLib.Common
             where ParentT : Node
             where ChildT : Node
             => node.GetNodeOrCreate<ParentT, ChildT>(path, _ => default);
+
+        public static T FindOrCreateMeta<T>(this Godot.Object obj, string metaName, T def = default)
+        {
+            if (obj.HasMeta(metaName))
+                return (T)obj.GetMeta(metaName);
+            obj.SetMeta(metaName, def);
+            return def;
+        }
     }
 }

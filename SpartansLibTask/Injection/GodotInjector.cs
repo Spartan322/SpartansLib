@@ -1,3 +1,4 @@
+using System.Reflection.Emit;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +11,8 @@ using Mono.Cecil.Rocks;
 using ICustomAttributeProvider = Mono.Cecil.ICustomAttributeProvider;
 using MethodAttributes = Mono.Cecil.MethodAttributes;
 using ParameterAttributes = Mono.Cecil.ParameterAttributes;
+using OpCodes = Mono.Cecil.Cil.OpCodes;
+using Codes = System.Reflection.Emit.OpCodes;
 
 namespace SpartansLib.Injection
 {
@@ -38,6 +41,9 @@ namespace SpartansLib.Injection
         // private MethodReference _nodeGetNodeMethodDef;
         // private MethodReference _exportAttrCtorDef;
         // private MethodReference _godotPushErrorMethodDef;
+
+        private Assembly _spartansLibAssembly;
+        private Assembly _godotSharpAssembly;
 
         private string _configuration;
 
@@ -73,6 +79,8 @@ namespace SpartansLib.Injection
 
             _targetModule = ModuleDefinition.ReadModule(_targetModuleAssemblyPath, readerParameters);
             _spartansLibModule = ModuleDefinition.ReadModule(_spartansLibModuleAssemblyPath, readerParameters);
+            _spartansLibAssembly = Assembly.LoadFrom(_spartansLibModuleAssemblyPath);
+            _godotSharpAssembly = Assembly.LoadFrom(_godotMainAssemblyDir + "GodotSharp.dll");
 
             var godotSharpModule = ModuleDefinition.ReadModule(_godotMainAssemblyDir + "GodotSharp.dll");
 
@@ -295,6 +303,191 @@ namespace SpartansLib.Injection
             return result;
         }
 
+        private delegate Attribute AttributeInstanceFactory(object[] args);
+        private Dictionary<MethodReference, AttributeInstanceFactory> _customAttributeFactories
+            = new Dictionary<MethodReference, AttributeInstanceFactory>();
+        private AttributeInstanceFactory GetOrCreateCustomAttributeObjectFactory(CustomAttribute attribute)
+        {
+            if(_customAttributeFactories.TryGetValue(attribute.Constructor, out var factory))
+                return factory;
+
+            var attributeType = _spartansLibAssembly.GetType(attribute.AttributeType.FullName);
+            var method = new DynamicMethod("CreateInstance", attributeType, new Type[] { typeof(object[]) });
+            ConstructorInfo ctorInfo;
+            int index;
+            var gen = method.GetILGenerator();
+            if(attribute.Constructor.Parameters.Count > 0)
+            {
+                var argTypes = new Type[attribute.Constructor.Parameters.Count];
+                index = 0;
+                foreach (var caArg in attribute.Constructor.Parameters)
+                    argTypes[index] = GenOpCodeAndArgTypeFor(gen, caArg.ParameterType.FullName, index++);
+
+                ctorInfo = attributeType.GetConstructor(argTypes);
+            }
+            else
+                ctorInfo = attributeType.GetConstructor(Type.EmptyTypes);
+
+            gen.Emit(Codes.Newobj, ctorInfo);
+
+            index = 0;
+            var lastIndex = attribute.Fields.Count + attribute.Properties.Count;
+            var constructArgTypes = new Type[
+                + attribute.Fields.Count
+                + attribute.Properties.Count];
+            foreach (var field in attributeType.GetFields(BindingFlags.DeclaredOnly | BindingFlags.Instance))
+            {
+                GenOpCodeAndArgTypeFor(gen, field.FieldType.FullName, index++);
+                gen.Emit(Codes.Stfld, attributeType.GetField(field.Name));
+                if(index < lastIndex) gen.Emit(Codes.Dup);
+            }
+            foreach (var property in attributeType.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance))
+            {
+                GenOpCodeAndArgTypeFor(gen, property.PropertyType.FullName, index++);
+                var reflectedProperty = attributeType.GetProperty(property.Name);
+                if(reflectedProperty.CanWrite)
+                    gen.Emit(Codes.Callvirt, reflectedProperty.SetMethod);
+                else
+                    gen.Emit(Codes.Stfld, attributeType.GetField($"<{reflectedProperty.Name}>k__BackingField"));
+                if(index < lastIndex) gen.Emit(Codes.Dup);
+            }
+
+            gen.Emit(Codes.Ret);
+            return _customAttributeFactories[attribute.Constructor] = (AttributeInstanceFactory)method.CreateDelegate(typeof(AttributeInstanceFactory));
+        }
+
+        private Type _GetArgType(string fullname)
+        {
+            switch(fullname)
+            {
+                case "System."+nameof(Boolean): return typeof(Boolean);
+                case "System."+nameof(String): return typeof(String);
+                case "System."+nameof(Int16): return typeof(Int16);
+                case "System."+nameof(Int32): return typeof(Int32);
+                case "System."+nameof(Int64): return typeof(Int64);
+                case "System."+nameof(Char): return typeof(Char);
+                case "System."+nameof(Byte): return typeof(Byte);
+                case "System."+nameof(Double): return typeof(Double);
+                case "System."+nameof(Single): return typeof(Single);
+                case "System."+nameof(Type): return typeof(Type);
+                case "System."+nameof(Object): return typeof(Object);
+                default: // Only supposed to be possible with enums and arrays
+                    if(fullname.EndsWith("[]")) // Is Array
+                        return _GetArgType(fullname.Remove(fullname.Length-2, 2)).MakeArrayType();
+                    return _spartansLibAssembly.GetType(fullname);
+            }
+        }
+
+        private Type GenOpCodeAndArgTypeFor(
+            ILGenerator gen,
+            string argTypeFullName,
+            int index
+            //out Type argType
+        )
+        {
+            Type argType;
+            gen.Emit(Codes.Ldarg_0); // args
+            switch(index)
+            {
+                case 0: gen.Emit(Codes.Ldc_I4_0); break;
+                case 1: gen.Emit(Codes.Ldc_I4_1); break;
+                case 2: gen.Emit(Codes.Ldc_I4_2); break;
+                case 3: gen.Emit(Codes.Ldc_I4_3); break;
+                case 4: gen.Emit(Codes.Ldc_I4_4); break;
+                case 5: gen.Emit(Codes.Ldc_I4_5); break;
+                case 6: gen.Emit(Codes.Ldc_I4_6); break;
+                case 7: gen.Emit(Codes.Ldc_I4_7); break;
+                case 8: gen.Emit(Codes.Ldc_I4_8); break;
+                default: gen.Emit(Codes.Ldc_I4, index); break;
+            }
+            gen.Emit(Codes.Ldelem_Ref);
+            switch(argTypeFullName)
+            {
+                case "System."+nameof(Boolean):
+                    gen.Emit(Codes.Unbox_Any, argType = typeof(Boolean));
+                    break;
+                case "System."+nameof(String):
+                    gen.Emit(Codes.Castclass, argType = typeof(String));
+                    break;
+                case "System."+nameof(Int16):
+                    gen.Emit(Codes.Unbox_Any, argType = typeof(Int16));
+                    break;
+                case "System."+nameof(Int32):
+                    gen.Emit(Codes.Unbox_Any, argType = typeof(Int32));
+                    break;
+                case "System."+nameof(Int64):
+                    gen.Emit(Codes.Unbox_Any, argType = typeof(Int64));
+                    break;
+                case "System."+nameof(Char):
+                    gen.Emit(Codes.Unbox_Any, argType = typeof(Char));
+                    break;
+                case "System."+nameof(Byte):
+                    gen.Emit(Codes.Unbox_Any, argType = typeof(Byte));
+                    break;
+                case "System."+nameof(Double):
+                    gen.Emit(Codes.Unbox_Any, argType = typeof(Double));
+                    break;
+                case "System."+nameof(Single):
+                    gen.Emit(Codes.Unbox_Any, argType = typeof(Single));
+                    break;
+                case "System."+nameof(Type):
+                    gen.Emit(Codes.Castclass, argType = typeof(Type));
+                    break;
+                case "System."+nameof(Object): argType = typeof(Object); break;
+                default: // Only supposed to be possible with enums and arrays
+                    if(argTypeFullName.EndsWith("[]")) // Is Array
+                    {
+                        gen.Emit(Codes.Castclass, argType = _GetArgType(argTypeFullName).MakeArrayType());
+                        break;
+                    }
+                    gen.Emit(Codes.Unbox_Any, typeof(Int32));
+                    argType = Type.GetType(argTypeFullName) ?? _godotSharpAssembly.GetType(argTypeFullName) ?? _spartansLibAssembly.GetType(argTypeFullName);
+                    break;
+            }
+            if(argType == null) throw new Exception($"{argTypeFullName} threw a null");
+            return argType;
+        }
+
+        private Attribute CreateInjectedCustomAttributeObject(CustomAttribute attribute)
+        {
+            if(!CanBeAssignedTo(
+                attribute.AttributeType.Resolve(),
+                "SpartansLib.Attributes.SpartansLibAttribute"))
+                return null;
+            var factory = GetOrCreateCustomAttributeObjectFactory(attribute);
+            if(!attribute.HasConstructorArguments && !attribute.HasFields && !attribute.HasProperties)
+                return factory(Array.Empty<object>());
+            var args = new object[
+                attribute.ConstructorArguments.Count
+                    + attribute.Fields.Count
+                    + attribute.Properties.Count];
+            var index = 0;
+            foreach(var arg in attribute.ConstructorArguments)
+                args[index++] = arg.Value;
+            foreach(var arg in attribute.Fields)
+                args[index++] = arg.Argument.Value;
+            foreach(var arg in attribute.Properties)
+                args[index++] = arg.Argument.Value;
+            return factory(args);
+
+            IEnumerable<TypeReference> GetHierachy(TypeDefinition type)
+            {
+                TypeReference next;
+                do yield return next = type.BaseType;
+                while(next != type.Module.TypeSystem.Object);
+            }
+
+            bool CanBeAssignedTo(TypeDefinition derived, string baseFullName)
+                => GetHierachy(derived).Any(type => type.FullName == baseFullName);
+        }
+
+        private delegate void Invoker(Attribute attrib, params object[] args);
+        private Dictionary<string, Invoker> _namesToInvokers = new Dictionary<string, Invoker>();
+        private void InvokeModifierMethod(Attribute attrib, string methodName, params object[] args)
+        {
+            attrib.GetType().InvokeMember(methodName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.InvokeMethod, null, attrib, args);
+        }
+
         private MethodReference _typeRuntimeHandle;
         private MethodReference _methodRuntimeHandle;
         private MethodReference _fieldRuntimeHandle;
@@ -367,47 +560,53 @@ namespace SpartansLib.Injection
             {
                 foreach (var ca in classAttrs)
                 {
+                    var attribObj = CreateInjectedCustomAttributeObject(ca);
+                    if(attribObj == null) continue;
+
                     if (TryGetAttributeMethod(ca, nodeClass, "OnConstructor", out var onCtorMethodImp))
                     {
-                        InsertInstructionsIntoExistingMethod(cilh.IL, ILHelper.Compose(
-                            ComposeForCustomAttribute(ca, cilh),
-                            cilh.PushThis(),
-                            ComposeMemberReferenceInstruction(nodeClass, nodeClass, cilh),
-                            cilh.CallMethodVirtual(onCtorMethodImp),
-                            cilh.Nop()
-                        ));
+                        InvokeModifierMethod(attribObj, onCtorMethodImp.Name, cilh.IL, nodeClass);
+                        // InsertInstructionsIntoExistingMethod(cilh.IL, ILHelper.Compose(
+                        //     ComposeForCustomAttribute(ca, cilh),
+                        //     cilh.PushThis(),
+                        //     ComposeMemberReferenceInstruction(nodeClass, nodeClass, cilh),
+                        //     cilh.CallMethodVirtual(onCtorMethodImp),
+                        //     cilh.Nop()
+                        // ));
                     }
 
                     if (!TryGetAttributeMethod(ca, nodeClass, "OnReady", out var onReadyMethodImp))
                         continue;
                     readyMethod = GetOrCreateReadyMethod(nodeClass);
                     rilh = new ILHelper(readyMethod.Body.GetILProcessor());
-                    InsertInstructionsIntoExistingMethod(rilh.IL, ILHelper.Compose(
-                        ComposeForCustomAttribute(ca, rilh),
-                        rilh.PushThis(),
-                        ComposeMemberReferenceInstruction(nodeClass, nodeClass, rilh),
-                        rilh.CallMethodVirtual(onReadyMethodImp),
-                        rilh.Nop()
-                    ), true);
+                    InvokeModifierMethod(attribObj, onReadyMethodImp.Name, rilh.IL, nodeClass);
+                    // InsertInstructionsIntoExistingMethod(rilh.IL, ILHelper.Compose(
+                    //     ComposeForCustomAttribute(ca, rilh),
+                    //     rilh.PushThis(),
+                    //     ComposeMemberReferenceInstruction(nodeClass, nodeClass, rilh),
+                    //     rilh.CallMethodVirtual(onReadyMethodImp),
+                    //     rilh.Nop()
+                    // ), true);
                 }
             }
 
             foreach (var memberDef in members)
             {
+                Console.WriteLine(memberDef.FullName);
                 var attrs = GetFieldAttributes(memberDef, _spartanLibsAttributeTypeDef);
                 if (attrs == null || attrs.Count < 1)
                 {
-                    Console.WriteLine($"No member attributes found for '{memberDef.Name}'");
+                    Console.WriteLine($"No member attributes found for '{memberDef.Name}'.");
                     continue;
                 }
-                Console.WriteLine($"Member attribute{(attrs.Count > 1 ? "s" : "")} {string.Join(", ", attrs.Select(a => $"'{a.Constructor.DeclaringType.FullName}'"))} found for '{memberDef.Name}'");
+                Console.WriteLine($"Member attribute{(attrs.Count > 1 ? "s" : "")} {string.Join(", ", attrs.Select(a => $"'{a.Constructor.DeclaringType.FullName}'"))} found for '{memberDef.Name}'.");
 
                 if (readyMethod == null) readyMethod = GetOrCreateReadyMethod(nodeClass);
                 if (rilh == null) rilh = new ILHelper(readyMethod.Body.GetILProcessor());
 
                 if (memberDef is PropertyDefinition propDef && propDef.SetMethod == null)
                 {
-                    Console.WriteLine("Member does not contain a setter property, creating one");
+                    Console.WriteLine("Member does not contain a setter property, creating one.");
                     var setMethod = new MethodDefinition(
                         $"set_{propDef.Name}",
                         MethodAttributes.Private | MethodAttributes.HideBySig | MethodAttributes.SpecialName,
@@ -430,26 +629,31 @@ namespace SpartansLib.Injection
 
                 foreach (var ca in attrs)
                 {
+                    var attribObj = CreateInjectedCustomAttributeObject(ca);
+                    if(attribObj == null) continue;
+
                     if (TryGetAttributeMethod(ca, nodeClass, "OnConstructor", out var onCtorMethodImp))
                     {
-                        InsertInstructionsIntoExistingMethod(cilh.IL, ILHelper.Compose(
-                            ComposeForCustomAttribute(ca, cilh),
-                            cilh.PushThis(),
-                            ComposeMemberReferenceInstruction(nodeClass, memberDef, cilh),
-                            cilh.CallMethodVirtual(onCtorMethodImp),
-                            cilh.Nop()
-                        ));
+                        InvokeModifierMethod(attribObj, onCtorMethodImp.Name, cilh.IL, memberDef);
+                        // InsertInstructionsIntoExistingMethod(cilh.IL, ILHelper.Compose(
+                        //     ComposeForCustomAttribute(ca, cilh),
+                        //     cilh.PushThis(),
+                        //     ComposeMemberReferenceInstruction(nodeClass, memberDef, cilh),
+                        //     cilh.CallMethodVirtual(onCtorMethodImp),
+                        //     cilh.Nop()
+                        // ));
                     }
 
                     if (!TryGetAttributeMethod(ca, nodeClass, "OnReady", out var onReadyMethodImp))
                         continue;
-                    InsertInstructionsIntoExistingMethod(rilh.IL,
-                ILHelper.Compose(
-                    ComposeForCustomAttribute(ca, rilh),
-                            rilh.PushThis(),
-                            ComposeMemberReferenceInstruction(nodeClass, memberDef, rilh),
-                            rilh.CallMethodVirtual(onReadyMethodImp),
-                            rilh.Nop()), true);
+                    InvokeModifierMethod(attribObj, onReadyMethodImp.Name, rilh.IL, memberDef);
+                //     InsertInstructionsIntoExistingMethod(rilh.IL,
+                // ILHelper.Compose(
+                //     ComposeForCustomAttribute(ca, rilh),
+                //             rilh.PushThis(),
+                //             ComposeMemberReferenceInstruction(nodeClass, memberDef, rilh),
+                //             rilh.CallMethodVirtual(onReadyMethodImp),
+                //             rilh.Nop()), true);
                 }
             }
         }
@@ -743,8 +947,10 @@ namespace SpartansLib.Injection
                 il.Append(instruction);
         }
 
+        private TaskLoggingHelper logger;
         public void Inject(TaskLoggingHelper log)
         {
+            logger = log;
             ReadTargetAssembly();
 
             // var canProcessNodeLinks = _godotUtilsNodeAttrTypeDef != null;
